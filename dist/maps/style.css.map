@@ -1,0 +1,1 @@
+{"version":3,"sources":["style.css"],"names":[],"mappings":"AAAA,wDAAuD;AACvD;EACE,gBAAe;EACf,uBAAc;EAAd,sBAAc;EAAd,eAAc,EAAE","file":"style.css","sourcesContent":["/* line 3, /www/sites/sudoku/www/src/scss/style.scss */\nbody {\n  color: #3bbfcf;\n  display: flex; }\n\n"],"sourceRoot":"/source/"}

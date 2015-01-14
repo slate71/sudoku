@@ -1,0 +1,1 @@
+{"version":3,"sources":["test.js"],"names":[],"mappings":"AAAA;AACA;AACA;AACA;AACA","file":"app.js","sourcesContent":["$(function(){\n\tvar p = document.createElement('p');\n\tp.textContent = 'It Worked';\n\tdocument.getElementById('app').appendChild(p)\n});"],"sourceRoot":"/source/"}
