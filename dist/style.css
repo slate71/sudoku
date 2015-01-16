@@ -1,9 +1,17 @@
-/* line 3, /www/sites/sudoku/www/src/scss/style.scss */
+/* line 3, /Users/luke/www/sites/sudoku/www/src/scss/style.scss */
 body {
   color: #3bbfcf;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex; }
+  font-family: sans-serif; }
+
+/* line 8, /Users/luke/www/sites/sudoku/www/src/scss/style.scss */
+input {
+  width: 1.6em;
+  height: 1.6em;
+  text-align: center; }
+
+/* line 14, /Users/luke/www/sites/sudoku/www/src/scss/style.scss */
+input.sect2 {
+  background-color: #eee; }
 
 
 /*# sourceMappingURL=maps/style.css.map */

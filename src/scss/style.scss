@@ -2,5 +2,15 @@
 
 body {
 	color: $blue;
-	display: flex;
+	font-family: sans-serif;
+}
+
+input {
+	width: 1.6em;
+	height: 1.6em;
+	text-align: center;
+}
+
+input.sect2 {
+	background-color: #eee;
 }
