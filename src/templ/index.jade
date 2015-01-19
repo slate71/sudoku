@@ -6,12 +6,10 @@ html
 	body
 		h1='Sudoku'
 		div(id='container')
-			
-
 		div(id='menu')
-			button='Build Game'
-			button='Reset Game'
-			button='Solve Game'
-			button='Validate Board'
+			button( onClick='SUDOKU.getInstance().reset()' ) Reset Game
+			button( onClick='SUDOKU.getInstance().solve()' ) Solve Game
+			button( onClick='SUDOKU.getInstance().validate()' ) Validate Board
+		
 
 		script(src='./dist/app.js')

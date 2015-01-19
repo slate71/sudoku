@@ -8,10 +8,9 @@
     <h1>Sudoku</h1>
     <div id="container"></div>
     <div id="menu">
-      <button>Build Game</button>
-      <button>Reset Game</button>
-      <button>Solve Game</button>
-      <button>Validate Board</button>
+      <button onClick="SUDOKU.getInstance().reset()">Reset Game</button>
+      <button onClick="SUDOKU.getInstance().solve()">Solve Game</button>
+      <button onClick="SUDOKU.getInstance().validate()">Validate Board</button>
     </div>
     <script src="./dist/app.js"></script>
   </body>

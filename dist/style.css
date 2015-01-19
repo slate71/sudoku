@@ -13,5 +13,9 @@ input {
 input.sect2 {
   background-color: #eee; }
 
+/* line 18, /Users/luke/www/sites/sudoku/www/src/scss/style.scss */
+.sudoku-input-error {
+  background-color: pink !important; }
+
 
 /*# sourceMappingURL=maps/style.css.map */
