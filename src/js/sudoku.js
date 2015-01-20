@@ -2,7 +2,7 @@
  * A modular performant JavaScript pattern.
  * Beginning with the initial Anonymous Closure. 
  * All code that runs inside the function lives in a
- * closure, providing privacy and state for the lifetime of our app.
+ * closure, providing privacy and state for the lifetime of the app.
  * 
  * @dependencies jQuery, Ramdajs.
  * @param {imports} Global imports. Keeps things clear and fast. Provides access to our libraries' global variable.
@@ -468,5 +468,4 @@ var SUDOKU = ( function($, R) {
             return _instance;
         }
     };
-
 }(jQuery, R));
