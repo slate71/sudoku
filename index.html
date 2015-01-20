@@ -1,13 +1,15 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Sudoku Code Challenge</title>
     <link rel="stylesheet" type="text/css" href="./dist/style.css">
   </head>
   <body>
     <h1>Sudoku</h1>
-    <div id="container"></div>
-    <div id="menu">
+    <div id="container" class="container"></div>
+    <div id="buttons" class="buttons">
       <button onClick="SUDOKU.getInstance().reset()">Reset Game</button>
       <button onClick="SUDOKU.getInstance().solve()">Solve Game</button>
       <button onClick="SUDOKU.getInstance().validate()">Validate Board</button>

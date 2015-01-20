@@ -1,20 +1,7 @@
+// Import font
+@import url(http://fonts.googleapis.com/css?family=Lato:100:latin);
+// Import Styles
 @import "includes/settings";
-
-body {
-	color: $blue;
-	font-family: sans-serif;
-}
-
-input {
-	width: 1.6em;
-	height: 1.6em;
-	text-align: center;
-}
-
-input.sect2 {
-	background-color: #eee;
-}
-
-.sudoku-input-error {
-	background-color: pink !important;
-}
+@import "includes/base";
+@import "includes/components";
+@import "includes/states";

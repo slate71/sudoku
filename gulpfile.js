@@ -9,7 +9,7 @@ var gulp         = require('gulp'),
 
 var paths = {
 	scripts:   ['./src/js/vendor/*.js', './src/js/*.js'],
-	styles:    ['./src/scss/*.scss'],
+	styles:    ['./src/scss/**/*.scss'],
 	templates: ['./src/templ/*.jade']
 };
 

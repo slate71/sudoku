@@ -1,1 +1,28 @@
-$blue: #3bbfcf;
+// Colors
+$pink: rgba(226, 40, 130, 1 );
+$blue: #1fbad6; // rgba( 31, 186, 214, 1 );
+$green: rgba( 51, 255, 51, 1 );
+$darkGray: rgba( 0, 0, 0, 0.8 );
+$gray: rgba(34, 34, 34, 1);
+$lightGray: rgba( 204, 204, 204, 1 );
+$transparent: rgba( 255, 255, 255, 0.15 );
+$black: rgba( 0, 0, 0, 0.9 );
+$white: rgba( 255, 255, 255, 1 );
+
+// Fonts
+$font-family: 'Lato', sans-serif;
+
+/**
+ * Mixins
+ **/
+@mixin breakpoint($point) {
+  @if $point == papa-bear {
+    @media (max-width: 1600px) { @content; }
+  }
+  @else if $point == mama-bear {
+    @media (max-width: 1250px) { @content; }
+  }
+  @else if $point == baby-bear {
+    @media (max-width: 650px)  { @content; }
+  }
+}

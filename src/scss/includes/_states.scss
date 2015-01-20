@@ -1,0 +1,16 @@
+.sudoku-board input.sudoku-clues {
+	color: $blue;
+	background-color: $white;
+}
+
+.sudoku-board input.sect1 {
+	background-color: $transparent;
+}
+
+.sudoku-board input.sect2 {
+	background-color: $gray;
+}
+
+.sudoku-board input.sudoku-input-error {
+	background-color: $pink;
+}

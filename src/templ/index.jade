@@ -1,15 +1,17 @@
 doctype html
-html
+html(lang="en")
 	head
+		meta(charset="utf-8")
+		meta(name="viewport" content="width=device-width, initial-scale=1")
 		title='Sudoku Code Challenge'
 		link(rel='stylesheet' type='text/css' href='./dist/style.css')
+
 	body
 		h1='Sudoku'
-		div(id='container')
-		div(id='menu')
-			button( onClick='SUDOKU.getInstance().reset()' ) Reset Game
-			button( onClick='SUDOKU.getInstance().solve()' ) Solve Game
-			button( onClick='SUDOKU.getInstance().validate()' ) Validate Board
-		
+		div(id='container' class='container')
+		div(id='buttons' class='buttons')
+			button(onClick='SUDOKU.getInstance().reset()') Reset Game
+			button(onClick='SUDOKU.getInstance().solve()') Solve Game
+			button(onClick='SUDOKU.getInstance().validate()') Validate Board
 
 		script(src='./dist/app.js')

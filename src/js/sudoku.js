@@ -36,10 +36,10 @@ var SUDOKU = ( function($, R) {
                 var isValid;
 
                 isValid = _game.validateMatrix();
-                $( '.sudoku-container' ).toggleClass( 'valid-matrix', isValid );
+                $( '.sudoku-board' ).toggleClass( 'valid-matrix', isValid );
             },
             solve: function() {
-                var isValid, starttime, endtime, elapsed;
+                var isValid, starttime, endtime, elapsed, gameResults, $table;
                 // Make sure the board is valid first
                 if ( !_game.validateMatrix() ) {
                     return false;
@@ -56,6 +56,16 @@ var SUDOKU = ( function($, R) {
 
                 // Get solving end time
                 endtime = Date.now();
+
+                gameResults = R.values( _game.matrix.row );
+                $table = $('#container');
+                R.forEach.idx( function( result, row ) {
+                    R.forEach.idx( function( val, col ) {
+                        return $table
+                                 .find('input[data-row="'+row+'"][data-col="'+col+'"]')
+                                 .val( val );
+                    }, result );
+                }, gameResults);
 
                 // Visual indication of whether the game was solved
                 $( '.sudoku-container' ).toggleClass( 'valid-matrix', isValid );
@@ -97,9 +107,9 @@ var SUDOKU = ( function($, R) {
         buildGUI: function() {
 
             var _this   = this,
-                columns = new Array( 9 ), 
-                rows    = new Array( 9 ),
-                $table  = $( '<table>' );
+                columns = ['', '', '', '', '', '', '', '', ''], 
+                rows    = ['', '', '', '', '', '', '', '', ''],
+                $table  = $( '<table>' ).addClass('sudoku-board');
 
             function buildInput(col) {
                 var $input       = $( '<input>' ),
@@ -128,7 +138,9 @@ var SUDOKU = ( function($, R) {
             }
 
             function addAttributes(row, idx) {
-                R.times(function(col) { return _this.$cellMatrix[idx][col].attr('data-row', idx ) }, 9 );
+                R.times(function(col) { 
+                    _this.$cellMatrix[idx][col].attr('data-row', idx );
+                }, 9 );
                 return row.find( 'input' ).attr( 'data-row', idx ) &&
                        R.forEach( addSection, row.find('input'));
             }
@@ -169,7 +181,7 @@ var SUDOKU = ( function($, R) {
             // Cache value in matrix
             this.matrix.row[row][col] = val;
             this.matrix.col[col][row] = val;
-            this.matrix.sect[sectIndex] = val;
+            this.matrix.sect[sectRow][sectCol][sectIndex] = val;
          },
 
         /**
@@ -178,8 +190,11 @@ var SUDOKU = ( function($, R) {
         resetGame: function() {
             this.resetValidationMatrices();
 
-            // This ties reseting the the game to the DOM. Using cellMatrix coordinates would be more modular.
-            $( '#container' ).find( 'input' ).val( undefined )
+            R.forEach(function(input) {
+                if ( !$( input ).hasClass( 'sudoku-clues' ) ) {
+                    return $( input ).val( '' );
+                }
+            }, $( '.sudoku-board' ).find( 'input' ) );
 
             $( '.sudoku-container input' ).removeAttr( 'disabled' );
             $( '.sudoku-container' ).removeClass( 'valid-matrix' );
@@ -196,20 +211,20 @@ var SUDOKU = ( function($, R) {
 
             // Build the row/col matrix and validation arrays
             R.times( function(idx) { 
-                _this.matrix.row[idx] = new Array(9);
-                _this.matrix.col[idx] = new Array(9);
+                _this.matrix.row[idx] = ['', '', '', '', '', '', '', '', ''];
+                _this.matrix.col[idx] = ['', '', '', '', '', '', '', '', ''];
                 _this.validation.row[idx] = [];
                 _this.validation.col[idx] = [];
             }, 9 );
 
             R.times( function(row) { 
                 _this.matrix.sect[row] = []; 
-                _this.validation.sect[row] = {}
+                _this.validation.sect[row] = {};
             }, 3 );
 
             R.mapObj( function(row) { 
                 R.times( function(col) { 
-                    return row[col] = new Array(9); 
+                    return row[col] = ['', '', '', '', '', '', '', '', '']; 
                 }, 3);
             }, _this.matrix.sect );
 
@@ -226,11 +241,11 @@ var SUDOKU = ( function($, R) {
           validateNumber: function(val, rowID, colID, oldNum) {
             var isValid = true;
                 sectRow = Math.floor( rowID / 3 );
-                sectCol = Math.floor( colID / 3 )
+                sectCol = Math.floor( colID / 3 );
             
             // Remove oldNum from the validation matrices,
             // if it exists in them.
-            oldNum = oldNum || undefined;
+            oldNum = oldNum || '';
             if ( this.validation.row[rowID].indexOf( oldNum ) > -1 ) {
                 this.validation.row[rowID].splice(
                     this.validation.row[rowID].indexOf( oldNum ), 1
@@ -247,10 +262,8 @@ var SUDOKU = ( function($, R) {
                 );
             }
 
-            if( val !== undefined ) {
-                
+            if( val !== '' ) {
                 if( $.isNumeric( val ) && val > 0 && val <= 9 ) {
-                    
                     if( 
                         R.contains( val )( this.validation.row[rowID] ) ||
                         R.contains( val )( this.validation.col[colID] ) ||
@@ -262,7 +275,6 @@ var SUDOKU = ( function($, R) {
                     }
 
                 }
-
                 this.validation.row[rowID].push( val );
                 this.validation.col[colID].push( val );
                 this.validation.sect[sectRow][sectCol].push( val );
@@ -272,22 +284,20 @@ var SUDOKU = ( function($, R) {
         },
 
         validateMatrix: function() {
-            var isValid, val, $element,
-                hasError = false;
+            var _this = this, row, col, isValid, hasError = false,
+                $input = $('.sudoku-board').find('input[data-row="'+row+'"][data-col="'+col+'"]');
 
-            // Go over entire board, and compare to the cached
-            // validation arrays
-            for ( var row = 0; row < 9; row++ ) {
-                for ( var col = 0; col < 9; col++ ) {
-                    val = this.matrix.row[row][col];
-                    // Validate the value
-                    isValid = this.validateNumber( val, row, col, val );
-                    this.$cellMatrix[row][col].toggleClass( 'sudoku-input-error', !isValid );
-                    if ( !isValid ) {
+            // Check if each value in matrix is valid.
+            R.forEach.idx( function( key, row ) {
+                R.forEach.idx( function( val, col ) {
+                    isValid = _this.validateNumber( val, row, col, val );
+                    $input.toggleClass( 'sudoku-input-error', !isValid );
+                    if( !isValid ) {
                         hasError = true;
                     }
-                }
-            }
+                }, _this.matrix.row[key] );
+            }, R.keys(_this.matrix.row) );
+                        
             return !hasError;
         },
 
@@ -298,13 +308,12 @@ var SUDOKU = ( function($, R) {
          */
         solveGame: function( row, col ) {
             var _this = this, cval, sqRow, sqCol, $nextSquare, legalValues,
-                sectRow, sectCol, secIndex, gameResult;
+                sectRow, sectCol, secIndex;
 
             this.recursionCounter++;
             $nextSquare = this.findClosestEmptySquare( row, col );
-            
             if ( !$nextSquare ) {
-                // End of board
+                // End of Board
                 return true;
             } else {
                 sqRow = $nextSquare.data( 'row' );
@@ -317,32 +326,32 @@ var SUDOKU = ( function($, R) {
                 secIndex = ( sqRow % 3 ) * 3 + ( sqCol % 3 );
 
                 // Try out legal values for this cell
-                function tryLegalValues(cval) {
+                for ( var i = 0; i < legalValues.length; i++ ) {
+                    cval = legalValues[i];
                     // Update value in input
                     $nextSquare.val( cval );
-                    // $('#container').find('input[data-row="'+sqRow+'"][data-col="'+sqCol+'"]').val( cval );
+                    //$('#container').find('input[data-row="'+sqRow+'"][data-col="'+sqCol+'"]').val( cval );
                     // Update in matrices
-                    _this.matrix.row[sqRow][sqCol] = cval;
-                    _this.matrix.col[sqCol][sqRow] = cval;
-                    _this.matrix.sect[sectRow][sectCol][secIndex] = cval;
+                    this.matrix.row[sqRow][sqCol] = cval;
+                    this.matrix.col[sqCol][sqRow] = cval;
+                    this.matrix.sect[sectRow][sectCol][secIndex] = cval;
 
                     // Recursively keep trying
-                    if ( _this.solveGame( sqRow, sqCol ) ) {
+                    if ( this.solveGame( sqRow, sqCol ) ) {
                         return true;
                     } else {
                         // There was a problem, we should backtrack
-                        _this.backtrackCounter++;
+                        this.backtrackCounter++;
 
                         // Remove value from input
-                        _this.$cellMatrix[sqRow][sqCol].val( undefined );
-                        //$('#container').find('input[data-row="'+sqRow+'"][data-col="'+sqCol+'"]').val( undefined );
+                        this.$cellMatrix[sqRow][sqCol].val( '' );
+                        //$('#container').find('input[data-row="'+sqRow+'"][data-col="'+sqCol+'"]').val( '' );
                         // Remove value from matrices
-                        _this.matrix.row[sqRow][sqCol] = undefined;
-                        _this.matrix.col[sqCol][sqRow] = undefined;
-                        _this.matrix.sect[sectRow][sectCol][secIndex] = undefined;
+                        this.matrix.row[sqRow][sqCol] = '';
+                        this.matrix.col[sqCol][sqRow] = '';
+                        this.matrix.sect[sectRow][sectCol][secIndex] = '';
                     }
                 }
-                R.forEach( tryLegalValues, legalValues );
                 // If there was no success with any of the legal
                 // numbers, call backtrack recursively backwards
                 return false;
@@ -358,15 +367,18 @@ var SUDOKU = ( function($, R) {
          *  square
          */
         findClosestEmptySquare: function( row, col ) {
-            var walkingRow, walkingCol, found = false;
-            for ( var i = ( col + 9*row ); i < 81; i++ ) {
-                walkingRow = Math.floor( i / 9 );
-                walkingCol = i % 9;
-                if ( this.matrix.row[walkingRow][walkingCol] === undefined ) {
-                    found = true;
-                    return this.$cellMatrix[walkingRow][walkingCol];
+            var walkingRow, walkingCol, closestEmptySquare,
+                _this = this;
+
+            R.times( function( n ) {
+                walkingRow = Math.floor( n / 9 );
+                walkingCol = n % 9;
+                if ( _this.matrix.row[walkingRow][walkingCol] === '' ) {
+                    closestEmptySquare = _this.$cellMatrix[walkingRow][walkingCol];
                 }
-            }
+            }, 81 );
+
+            return closestEmptySquare;
         },
 
         /**
@@ -392,7 +404,6 @@ var SUDOKU = ( function($, R) {
                     // Remove from array
                     if ( legalNums.indexOf( val ) > -1 ) {
                         legalNums.splice( legalNums.indexOf( val ), 1 );
-                        console.log(legalNums);
                     }
                 }
             }
@@ -456,9 +467,136 @@ var SUDOKU = ( function($, R) {
             }
             return _instance;
         }
-    }
+    };
 
 }(jQuery, R));
 
-// Configs can be passed in here to over ride defaults.
-SUDOKU.getInstance().getNewBoard();
+$(function() {
+    // Configs can be passed in here to over ride defaults.
+    SUDOKU.getInstance().getNewBoard();
+    $inputs = $('input');
+    R.forEach.idx( function(n, idx) {
+        switch(idx) {
+            case 0:
+                $(n).val(5).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 1:
+                $(n).val(3).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 4:
+                $(n).val(7).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 9:
+                $(n).val(6).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 9 + 3:
+                $(n).val(1).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 9 + 4:
+                $(n).val(9).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 9 + 5:
+                $(n).val(5).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 18 + 1:
+                $(n).val(9).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 18 + 2:
+                $(n).val(8).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 18 + 7:
+                $(n).val(6).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 27:
+                $(n).val(8).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 27 + 4:
+                $(n).val(6).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 27 + 8:
+                $(n).val(3).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 36:
+                $(n).val(4).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 36 + 3:
+                $(n).val(8).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 36 + 5:
+                $(n).val(3).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 36 + 8:
+                $(n).val(1).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 45:
+                $(n).val(7).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 45 + 4:
+                $(n).val(2).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 45 + 8:
+                $(n).val(6).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 54 + 1:
+                $(n).val(6).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 54 + 6:
+                $(n).val(2).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 54 + 7:
+                $(n).val(8).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 63 + 3:
+                $(n).val(4).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 63 + 4:
+                $(n).val(1).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 63 + 5:
+                $(n).val(9).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 63 + 8:
+                $(n).val(5).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 72 + 4:
+                $(n).val(8).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 72 + 7:
+                $(n).val(7).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+            case 72 + 8:
+                $(n).val(9).trigger('keyup');
+                $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
+                break;
+        }
+    }, $inputs );
+});
