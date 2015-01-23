@@ -343,7 +343,7 @@ var SUDOKU = ( function($, R) {
                 }
             }, $( '.sudoku-board' ).find( 'input' ) );
 
-            $( '.sudoku-container input' ).removeAttr( 'disabled' );
+            $( '.sudoku-container' ).find( 'input' ).removeAttr( 'disabled' );
             $( '.sudoku-container' ).removeClass( 'valid-matrix' );
         },
 
