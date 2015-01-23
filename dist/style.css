@@ -1,8 +1,8 @@
-@import url(http://fonts.googleapis.com/css?family=Lato:100:latin);
+@import url(http://fonts.googleapis.com/css?family=Lato:300:latin);
 /**
  * Mixins
  **/
-/* line 1, /Users/luke/www/sites/sudoku/www/src/scss/includes/base */
+/* line 1, /www/sites/sudoku/www/src/scss/includes/base */
 body {
   position: relative;
   width: 100%;
@@ -11,7 +11,7 @@ body {
   color: #1fbad6;
   font-family: 'Lato', sans-serif; }
 
-/* line 10, /Users/luke/www/sites/sudoku/www/src/scss/includes/base */
+/* line 10, /www/sites/sudoku/www/src/scss/includes/base */
 h1 {
   margin-top: 16px;
   margin-bottom: 0;
@@ -23,14 +23,14 @@ h1 {
   text-transform: uppercase;
   font-weight: 100; }
 
-/* line 1, /Users/luke/www/sites/sudoku/www/src/scss/includes/components */
+/* line 1, /www/sites/sudoku/www/src/scss/includes/components */
 .container {
   position: relative;
   width: 100%;
   max-width: 480px;
   margin: 0 auto; }
 
-/* line 8, /Users/luke/www/sites/sudoku/www/src/scss/includes/components */
+/* line 8, /www/sites/sudoku/www/src/scss/includes/components */
 table.sudoku-board {
   margin: 0 auto;
   border-top: solid 1px rgba(0, 0, 0, 0.8);
@@ -38,23 +38,21 @@ table.sudoku-board {
   border-spacing: 0;
   width: 100%; }
 
-/* line 16, /Users/luke/www/sites/sudoku/www/src/scss/includes/components */
+/* line 16, /www/sites/sudoku/www/src/scss/includes/components */
 table.sudoku-board tr {
   width: 100%; }
 
-/* line 20, /Users/luke/www/sites/sudoku/www/src/scss/includes/components */
+/* line 20, /www/sites/sudoku/www/src/scss/includes/components */
 table.sudoku-board td {
   position: relative;
-  width: 11.11%;
-  font-weight: 100; }
-  /* line 24, /Users/luke/www/sites/sudoku/www/src/scss/includes/components */
+  width: 11.11%; }
+  /* line 23, /www/sites/sudoku/www/src/scss/includes/components */
   table.sudoku-board td:after {
     content: '';
     display: block;
-    margin-top: 100%;
-    font-weight: 100; }
+    margin-top: 100%; }
 
-/* line 32, /Users/luke/www/sites/sudoku/www/src/scss/includes/components */
+/* line 30, /www/sites/sudoku/www/src/scss/includes/components */
 table.sudoku-board input {
   margin: 0;
   padding: 0;
@@ -71,15 +69,14 @@ table.sudoku-board input {
   height: 100%;
   font-size: 25px;
   color: white;
-  font-weight: 100;
   font-smoothing: antialiased !important;
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.1);
   text-align: center; }
-  /* line 47, /Users/luke/www/sites/sudoku/www/src/scss/includes/components */
+  /* line 44, /www/sites/sudoku/www/src/scss/includes/components */
   table.sudoku-board input:focus {
     outline: none; }
 
-/* line 52, /Users/luke/www/sites/sudoku/www/src/scss/includes/components */
+/* line 49, /www/sites/sudoku/www/src/scss/includes/components */
 .buttons {
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -91,7 +88,7 @@ table.sudoku-board input {
   margin: 0 auto 3.2em auto;
   text-align: center; }
 
-/* line 60, /Users/luke/www/sites/sudoku/www/src/scss/includes/components */
+/* line 57, /www/sites/sudoku/www/src/scss/includes/components */
 .buttons button {
   -webkit-flex: 0 1 auto;
       -ms-flex: 0 1 auto;
@@ -105,36 +102,36 @@ table.sudoku-board input {
   font-family: 'Lato', sans-serif;
   font-size: 16px;
   text-transform: uppercase; }
-  /* line 71, /Users/luke/www/sites/sudoku/www/src/scss/includes/components */
+  /* line 68, /www/sites/sudoku/www/src/scss/includes/components */
   .buttons button:first-child {
     border-right: solid 1px rgba(0, 0, 0, 0.8); }
-  /* line 74, /Users/luke/www/sites/sudoku/www/src/scss/includes/components */
+  /* line 71, /www/sites/sudoku/www/src/scss/includes/components */
   .buttons button:last-child {
     border-left: solid 1px rgba(0, 0, 0, 0.8); }
-  /* line 77, /Users/luke/www/sites/sudoku/www/src/scss/includes/components */
+  /* line 74, /www/sites/sudoku/www/src/scss/includes/components */
   .buttons button:hover {
     background-color: #1fbad6; }
-  /* line 80, /Users/luke/www/sites/sudoku/www/src/scss/includes/components */
+  /* line 77, /www/sites/sudoku/www/src/scss/includes/components */
   .buttons button:focus {
     outline: none; }
   @media (max-width: 650px) {
     .buttons button {
       font-size: 12px; } }
 
-/* line 1, /Users/luke/www/sites/sudoku/www/src/scss/includes/states */
+/* line 1, /www/sites/sudoku/www/src/scss/includes/states */
 .sudoku-board input.sudoku-clues {
   color: #1fbad6;
   background-color: white; }
 
-/* line 6, /Users/luke/www/sites/sudoku/www/src/scss/includes/states */
+/* line 6, /www/sites/sudoku/www/src/scss/includes/states */
 .sudoku-board input.sect1 {
   background-color: rgba(255, 255, 255, 0.15); }
 
-/* line 10, /Users/luke/www/sites/sudoku/www/src/scss/includes/states */
+/* line 10, /www/sites/sudoku/www/src/scss/includes/states */
 .sudoku-board input.sect2 {
   background-color: #222222; }
 
-/* line 14, /Users/luke/www/sites/sudoku/www/src/scss/includes/states */
+/* line 14, /www/sites/sudoku/www/src/scss/includes/states */
 .sudoku-board input.sudoku-input-error {
   background-color: #e22882; }
 

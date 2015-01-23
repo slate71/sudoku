@@ -20,12 +20,10 @@ table.sudoku-board tr {
 table.sudoku-board td {
 	position: relative;
 	width: 11.11%;
-	font-weight: 100;
 	&:after {
 		content: '';
 		display: block;
-		margin-top: 100%;
-		font-weight: 100;
+		margin-top: 100%;	
 	}
 }
 
@@ -40,7 +38,6 @@ table.sudoku-board input {
 	height: 100%;
 	font-size: 25px;
 	color: $white;
-	font-weight: 100;
 	font-smoothing: antialiased !important;
 	text-shadow: 1px 1px 0 rgba( 0, 0, 0, 0.1 );
 	text-align: center;
