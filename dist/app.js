@@ -18,7 +18,7 @@
 $(function() {
     // Configs can be passed in here to over ride defaults.
     SUDOKU.getInstance().getNewBoard();
-    $inputs = $('input');
+    /*$inputs = $('input');
     R.forEach.idx( function(n, idx) {
         switch(idx) {
             case 0:
@@ -142,7 +142,7 @@ $(function() {
                 $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
                 break;
         }
-    }, $inputs );
+    }, $inputs );*/
 });
 
 /**
@@ -253,29 +253,41 @@ var SUDOKU = ( function($, R) {
          */
         buildGUI: function() {
 
-            var _this   = this,
-                columns = ['', '', '', '', '', '', '', '', ''], 
-                rows    = ['', '', '', '', '', '', '', '', ''],
-                $table  = $( '<table>' ).addClass('sudoku-board');
+            var _this = this,
+                $td, $tr,
+                $table = $( '<table>' ).addClass('sudoku-board');
 
-            function buildInput(col) {
+            // Returns a single input field with attributes and a key up listener.
+            // We'll use this to build the input fields of the Sudoku board.
+            function buildInput(colID) {
                 var $input       = $( '<input>' ),
                     handleKeyUp  = $.proxy( _this.onKeyUp, _this ),
-                    attributes   = {  'maxlength': '1', 'data-col': col };
+                    attributes   = {  'maxlength': '1', 'data-col': colID };
                 
                 return $input.attr(attributes).on('keyup', handleKeyUp);
             }
 
-            function buildCol(col) {
-                return columns[col] = $('<td>').append( buildInput( col ) );
+            // Returns a single jQuery td elment containing an input field.
+            // We'll use this to build the columns in each row.
+            function buildCol(colID) {
+                return $('<td>').append( buildInput(colID) );
             }
 
-            function buildRow(row) {
-                _this.$cellMatrix[row] = {};
-                R.times( function(col) { return _this.$cellMatrix[row][col] = buildInput( col ); }, 9 );
-                return rows[row] = $('<tr>').append( R.times( buildCol, 9 ) );
-            }
+            // Returns a jQuery tr element containing 9 td elements with input fields.
+            // We'll use this to build the rows of the table.
+            function buildRow() {
+                $tr = $('<tr>');
 
+                R.times( function(colID) {
+                    return $tr.append( buildCol(colID) );
+                }, 9 );
+
+                return $tr;
+            }
+            
+            // Add a class to each input field, identifying which section style it is in.
+            // There are only two section styles. This helps help identify sections visually in 
+            // the GUI.
             function addSection(input){
                 if( (Math.floor($( input ).data('col')/3) + Math.floor($( input ).data('row')/3)) % 2 === 0 ) {
                     return $( input ).addClass('sect1');
@@ -284,22 +296,29 @@ var SUDOKU = ( function($, R) {
                 }
             }
 
-            function addAttributes(row, idx) {
-                R.times(function(col) { 
-                    _this.$cellMatrix[idx][col].attr('data-row', idx );
-                }, 9 );
-                return row.find( 'input' ).attr( 'data-row', idx ) &&
+            // Add the row ID data attribute and section style to each input field.
+            function addAttributes(row, rowID) {
+                return row.find( 'input' ).attr( 'data-row', rowID ) &&
                        R.forEach( addSection, row.find('input'));
             }
             
-            function buildTable() {
-                R.times(buildRow, 9);
-                R.forEach.idx( addAttributes, rows );
-                return $table.append( rows );
+            // Build the table.  This returns a table with 9 rows and 9 columns.
+            // Thus there are 81 cells.  Each cell has an input field with its
+            // coresponding attributes.
+            function theTable() {
+                var nineRows = R.times(buildRow, 9);
+
+                R.forEach.idx( function( row, rowID ) {
+                    return addAttributes( row, rowID );
+                }, nineRows );
+
+                return $table.append( nineRows );
             }
 
-            // Return the GUI table
-            return $('#container').append( buildTable );
+            // Render the GUI table to the DOM.
+            // Note: might be interesting to return a virtual table instead,
+            // for greater flexibility of when it is rendered to the DOM.
+            return $('#container').append( theTable );
         },
 
         /**
@@ -336,50 +355,34 @@ var SUDOKU = ( function($, R) {
          */
         resetGame: function() {
             this.resetValidationMatrices();
+            this.resetInputFields();
+            $( '.sudoku-board' ).removeClass( 'valid-matrix' );
+        },
 
-            R.forEach(function(input) {
+        resetValidationMatrices: function() {
+            // Clear the matrix rows, col, and section.
+            // Set each value in the matrix to an empty string.
+            this.matrix.row  = R.repeatN( R.repeatN( '', 9 ), 9 );
+            this.matrix.col  = R.repeatN( R.repeatN( '', 9 ), 9 );
+            this.matrix.sect = R.repeatN( R.repeatN( '', 3 ), 3 );
+            console.log(this.matrix);
+
+            // Clear the validation matrix rows, col, and section.
+            // The last dimension of each matrix row, col, or section is an empth array.
+            this.validation.row  = R.repeatN( [], 9 );
+            this.validation.col  = R.repeatN( [], 9 );
+            this.validation.sect = R.repeatN( R.repeatN( [], 3), 3);
+            console.log(this.validation);
+        },
+
+        resetInputFields: function() {
+            var $inputs = $( '.sudoku-board' ).find( 'input' );
+
+            R.forEach( function(input) {
                 if ( !$( input ).hasClass( 'sudoku-clues' ) ) {
                     return $( input ).val( '' );
                 }
-            }, $( '.sudoku-board' ).find( 'input' ) );
-
-            $( '.sudoku-container' ).find( 'input' ).removeAttr( 'disabled' );
-            $( '.sudoku-container' ).removeClass( 'valid-matrix' );
-        },
-
-        /**
-         * Reset and rebuild the validation matrices
-         */
-        resetValidationMatrices: function() {
-            var _this = this;
-
-            this.matrix = { 'row': {}, 'col': {}, 'sect': {} };
-            this.validation = { 'row': {}, 'col': {}, 'sect': {} };
-
-            // Build the row/col matrix and validation arrays
-            R.times( function(idx) { 
-                _this.matrix.row[idx] = ['', '', '', '', '', '', '', '', ''];
-                _this.matrix.col[idx] = ['', '', '', '', '', '', '', '', ''];
-                _this.validation.row[idx] = [];
-                _this.validation.col[idx] = [];
-            }, 9 );
-
-            R.times( function(row) { 
-                _this.matrix.sect[row] = []; 
-                _this.validation.sect[row] = {};
-            }, 3 );
-
-            R.mapObj( function(row) { 
-                R.times( function(col) { 
-                    return row[col] = ['', '', '', '', '', '', '', '', '']; 
-                }, 3);
-            }, _this.matrix.sect );
-
-            R.mapObj( function(row) {
-                R.times( function(col) {
-                    return row[col] = [];
-                }, 3);
-            }, _this.validation.sect );
+            },  $inputs );
         },
 
          /**
@@ -431,19 +434,21 @@ var SUDOKU = ( function($, R) {
         },
 
         validateMatrix: function() {
-            var _this = this, row, col, isValid, hasError = false,
-                $input = $('.sudoku-board').find('input[data-row="'+row+'"][data-col="'+col+'"]');
+                var rowID, colID, isValid,
+                    _this = this,
+                    hasError = false,
+                    $input = $('.sudoku-board').find('input[data-row="'+rowID+'"][data-col="'+colID+'"]');
 
-            // Check if each value in matrix is valid.
-            R.forEach.idx( function( key, row ) {
-                R.forEach.idx( function( val, col ) {
-                    isValid = _this.validateNumber( val, row, col, val );
+            // Validate each value cached in the matrix row.
+            R.forEach.idx( function( row, rowID ) { 
+                R.forEach.idx( function( val, colID ) {
+                    isValid = _this.validateNumber( val, rowID, colID, val );
                     $input.toggleClass( 'sudoku-input-error', !isValid );
                     if( !isValid ) {
                         hasError = true;
                     }
-                }, _this.matrix.row[key] );
-            }, R.keys(_this.matrix.row) );
+                }, row ); 
+            }, _this.matrix.row );
                         
             return !hasError;
         },
@@ -490,9 +495,6 @@ var SUDOKU = ( function($, R) {
                         // There was a problem, we should backtrack
                         this.backtrackCounter++;
 
-                        // Remove value from input
-                        this.$cellMatrix[sqRow][sqCol].val( '' );
-                        //$('#container').find('input[data-row="'+sqRow+'"][data-col="'+sqCol+'"]').val( '' );
                         // Remove value from matrices
                         this.matrix.row[sqRow][sqCol] = '';
                         this.matrix.col[sqCol][sqRow] = '';
@@ -521,7 +523,7 @@ var SUDOKU = ( function($, R) {
                 walkingRow = Math.floor( n / 9 );
                 walkingCol = n % 9;
                 if ( _this.matrix.row[walkingRow][walkingCol] === '' ) {
-                    closestEmptySquare = _this.$cellMatrix[walkingRow][walkingCol];
+                    closestEmptySquare = _this.$cellMatrix[walkingRow][walkingCol]; // can I use something besides the cell matrix or build it at the point of solution?
                 }
             }, 81 );
 
