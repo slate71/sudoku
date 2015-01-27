@@ -228,7 +228,6 @@ var SUDOKU = ( function($, R) {
         this.config = config;
 
         this.recursionCounter = 0;
-        this.$inputMatrix = {};  // A matrix for values inputed into the game board.
         this.matrix = {}; // A matrix for the game solution.
         this.validation = {}; // A matrix for storing the remaining legal values.
 
