@@ -57,16 +57,6 @@ var SUDOKU = ( function($, R) {
                 // Get solving end time
                 endtime = Date.now();
 
-                gameResults = R.values( _game.matrix.row );
-                $table = $('#container');
-                R.forEach.idx( function( result, row ) {
-                    R.forEach.idx( function( val, col ) {
-                        return $table
-                                 .find('input[data-row="'+row+'"][data-col="'+col+'"]')
-                                 .val( val );
-                    }, result );
-                }, gameResults);
-
                 // Visual indication of whether the game was solved
                 $( '.sudoku-container' ).toggleClass( 'valid-matrix', isValid );
                 if ( isValid ) {
@@ -91,11 +81,11 @@ var SUDOKU = ( function($, R) {
         this.config = config;
 
         this.recursionCounter = 0;
-        this.$cellMatrix = {};
-        this.matrix = {};
-        this.validation = {};
+        this.$inputMatrix = {};  // A matrix for values inputed into the game board.
+        this.matrix = {}; // A matrix for the game solution.
+        this.validation = {}; // A matrix for storing the remaining legal values.
 
-        this.resetValidationMatrices();
+        this.resetMatrices();
         return this;
     }
 
@@ -201,31 +191,45 @@ var SUDOKU = ( function($, R) {
             this.matrix.row[row][col] = val;
             this.matrix.col[col][row] = val;
             this.matrix.sect[sectRow][sectCol][sectIndex] = val;
+
+            // Cache Game Board
+            this.$inputCache = $('.sudoku-board').find('input');
          },
 
         /**
          * Reset the board and the game parameters
          */
         resetGame: function() {
-            this.resetValidationMatrices();
+            this.resetMatrices();
             this.resetInputFields();
             $( '.sudoku-board' ).removeClass( 'valid-matrix' );
         },
 
-        resetValidationMatrices: function() {
-            // Clear the matrix rows, col, and section.
-            // Set each value in the matrix to an empty string.
-            this.matrix.row  = R.repeatN( R.repeatN( '', 9 ), 9 );
-            this.matrix.col  = R.repeatN( R.repeatN( '', 9 ), 9 );
-            this.matrix.sect = R.repeatN( R.repeatN( '', 3 ), 3 );
-            console.log(this.matrix);
+        resetMatrices: function() {
+            var _this = this;
+            
+            this.matrix = { col: {}, row: {}, sect: {} };
+            this.validation = { col: {}, row: {}, sect: {} };
+            
+            R.times( function( n ) { 
+                _this.matrix.col[n] = R.repeatN( '', 9 );
+                _this.matrix.row[n] = R.repeatN( '', 9 );
+                _this.validation.col[n] = [];
+                _this.validation.row[n] = [];
+            }, 9 );
+            
+            R.times( function( row ) {
+                _this.matrix.sect[row] = {};
+                _this.validation.sect[row] = {};
 
-            // Clear the validation matrix rows, col, and section.
-            // The last dimension of each matrix row, col, or section is an empth array.
-            this.validation.row  = R.repeatN( [], 9 );
-            this.validation.col  = R.repeatN( [], 9 );
-            this.validation.sect = R.repeatN( R.repeatN( [], 3), 3);
-            console.log(this.validation);
+                R.times( function( col ) {
+                    _this.matrix.sect[row][col] = R.repeatN( '', 9 );
+                    _this.validation.sect[row][col] = [];
+                }, 3 );
+            }, 3 );
+
+            console.log( _this.matrix );
+            console.log( _this.validation );
         },
 
         resetInputFields: function() {
@@ -317,12 +321,14 @@ var SUDOKU = ( function($, R) {
 
             this.recursionCounter++;
             $nextSquare = this.findClosestEmptySquare( row, col );
+
             if ( !$nextSquare ) {
                 // End of Board
                 return true;
             } else {
-                sqRow = $nextSquare.data( 'row' );
-                sqCol = $nextSquare.data( 'col' );
+                $nextSquare = $( $nextSquare );
+                sqRow = $nextSquare.data( 'row' ); // returns row id
+                sqCol = $nextSquare.data( 'col' ); // return col id
                 legalValues = this.findLegalValuesForSquare( sqRow, sqCol );
 
                 // Find the segment id
@@ -335,11 +341,12 @@ var SUDOKU = ( function($, R) {
                     cval = legalValues[i];
                     // Update value in input
                     $nextSquare.val( cval );
-                    //$('#container').find('input[data-row="'+sqRow+'"][data-col="'+sqCol+'"]').val( cval );
+                    
                     // Update in matrices
                     this.matrix.row[sqRow][sqCol] = cval;
                     this.matrix.col[sqCol][sqRow] = cval;
                     this.matrix.sect[sectRow][sectCol][secIndex] = cval;
+                    
 
                     // Recursively keep trying
                     if ( this.solveGame( sqRow, sqCol ) ) {
@@ -347,6 +354,8 @@ var SUDOKU = ( function($, R) {
                     } else {
                         // There was a problem, we should backtrack
                         this.backtrackCounter++;
+
+                        $nextSquare.val( '' );
 
                         // Remove value from matrices
                         this.matrix.row[sqRow][sqCol] = '';
@@ -369,16 +378,22 @@ var SUDOKU = ( function($, R) {
          *  square
          */
         findClosestEmptySquare: function( row, col ) {
-            var walkingRow, walkingCol, closestEmptySquare,
-                _this = this;
+            var startingSquare, remainingSquares, emptySquares, closestEmptySquare;
 
-            R.times( function( n ) {
-                walkingRow = Math.floor( n / 9 );
-                walkingCol = n % 9;
-                if ( _this.matrix.row[walkingRow][walkingCol] === '' ) {
-                    closestEmptySquare = _this.$cellMatrix[walkingRow][walkingCol]; // can I use something besides the cell matrix or build it at the point of solution?
-                }
-            }, 81 );
+            // Returns the index of the cell passed into the function.
+            startingSquare = col + 9 * row;
+
+            // Return an array of cells starting from row, col coordinates
+            // to the end of the board.
+            remainingSquares = R.slice( startingSquare, 82 )( $('input') );
+
+            // Filter the empty cells.
+            emptySquares = R.filter.idx( function( cell, idx, list ) {
+                return $( cell ).val() === '';
+            }, remainingSquares );
+
+            // Return the closestEmptySquare
+            closestEmptySquare = R.head( emptySquares );
 
             return closestEmptySquare;
         },
@@ -396,12 +411,22 @@ var SUDOKU = ( function($, R) {
                 sectRow = Math.floor( row / 3 ),
                 sectCol = Math.floor( col / 3 );
 
-            // @return {array} containing the values 1 through 9
-            legalNums = R.times( function( n ) { return n + 1; }, 9 );
+            // Returns a list of numbers from 1 to 9.
+            legalNums = R.range(1, 10);
 
             // Check existing numbers in col
             for ( i = 0; i < 9; i++ ) {
-                val = Number( this.matrix.col[col][i] );
+                try {
+                    val = Number( this.matrix.col[col][i] );
+                } catch( e ) {
+                    console.log(e instanceof TypeError); // true
+                      console.log(e.message);              // "null has no properties"
+                      console.log(e.name);                 // "TypeError"
+                      console.log(e.fileName);             // "Scratchpad/1"
+                      console.log(e.lineNumber);           // 2
+                      console.log(e.columnNumber);         // 2
+                      console.log(e.stack);  
+                }
                 if ( val > 0) {
                     // Remove from array
                     if ( legalNums.indexOf( val ) > -1 ) {
