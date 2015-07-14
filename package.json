@@ -10,21 +10,29 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "https://github.com/slate71/uberoku"
+    "url": "https://github.com/slate71/sudoku"
   },
   "devDependencies": {
-    "gulp": "^3.8.10",
+    "browserify": "^10.2.4",
+    "gulp": "^3.9.0",
     "gulp-autoprefixer": "^2.0.0",
     "gulp-concat": "^2.4.3",
-    "gulp-jade": "^0.10.0",
+    "gulp-jade": "^1.0.1",
     "gulp-jest": "^0.3.0",
     "gulp-jquery-closure": "^1.1.1",
     "gulp-jshint": "^1.9.0",
     "gulp-livereload": "^3.2.0",
     "gulp-sass": "^1.2.4",
     "gulp-sourcemaps": "^1.3.0",
+    "gulp-util": "^3.0.5",
     "gulp-watch": "^3.0.0",
+    "jade": "^1.11.0",
+    "jest": "^0.1.40",
     "jquery": "^2.1.3",
-    "ramda": "^0.8.0"
+    "lodash.assign": "^3.2.0",
+    "ramda": "^0.14.0",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0",
+    "watchify": "^3.2.2"
   }
 }

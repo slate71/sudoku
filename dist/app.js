@@ -18,7 +18,7 @@
 $(function() {
     // Configs can be passed in here to over ride defaults.
     SUDOKU.getInstance().getNewBoard();
-    /*$inputs = $('input');
+    $inputs = $('input');
     R.forEach.idx( function(n, idx) {
         switch(idx) {
             case 0:
@@ -142,7 +142,7 @@ $(function() {
                 $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
                 break;
         }
-    }, $inputs );*/
+    }, $inputs );
 });
 
 /**

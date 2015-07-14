@@ -1,7 +1,7 @@
 /**
  * Here we build an initial game when the document is ready.
  * First we get an instance of the board and then render the clues.
- * With more time I would have build a generator instead of rendering each
+ * With more time I would have built a generator instead of rendering each
  * clue with a switch statment. 
  *
  * Configs can also be passed into the instance method.  
@@ -11,7 +11,7 @@
 $(function() {
     // Configs can be passed in here to over ride defaults.
     SUDOKU.getInstance().getNewBoard();
-    /*$inputs = $('input');
+    $inputs = $('input');
     R.forEach.idx( function(n, idx) {
         switch(idx) {
             case 0:
@@ -135,5 +135,5 @@ $(function() {
                 $(n).attr('disabled', 'disabled').addClass( 'sudoku-clues' );
                 break;
         }
-    }, $inputs );*/
+    }, $inputs );
 });

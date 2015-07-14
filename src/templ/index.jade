@@ -10,9 +10,9 @@ html(lang="en")
 		h1='Sudoku'
 		div(id='container' class='container')
 		div(id='buttons' class='buttons')
-			button(onClick='SUDOKU.getInstance().reset()') Reset Game
-			button(onClick='SUDOKU.getInstance().solve()') Solve Game
-			button(onClick='SUDOKU.getInstance().validate()') Validate Board
+			button(class='js-reset-game') Reset Game
+			button(class='js-solve-game') Solve Game
+			button(class='js-validate-game') Validate Board
 
-		script(src='./dist/app.js')
+		script(src='./dist/bundle.js')
 		

@@ -1,24 +1,16 @@
-/**
- * A modular performant JavaScript pattern.
- * Beginning with the initial Anonymous Closure. 
- * All code that runs inside the function lives in a
- * closure, providing privacy and state for the lifetime of the app.
- * 
- * @dependencies jQuery, Ramdajs.
- * @param {imports} Global imports. Keeps things clear and fast. Provides access to our libraries' global variable.
- */
 var SUDOKU = ( function($, R) {
 
-    var _instance, _game, 
-        defaultConfig = {
+    var defaultConfig = {
             // If set to true, will validate the numbers as they're entered.
             'validate_on_insert': true,
             'show_solver_timer': true,
             'show_recursion_counter': true,
             'solver_shuffle_numbers': true
-        },
-        paused = false, 
-        counter = 0;
+        };
+    var paused = false;
+    var counter = 0;
+    var _instance;
+    var _game;
 
     function init( config ) {
         conf = $.extend({}, defaultConfig, config);
@@ -89,10 +81,7 @@ var SUDOKU = ( function($, R) {
     }
 
     Game.prototype = {
-        /**
-         * Builds GUI.
-         * @return {jQuery} 9x9 table grid.
-         */
+
         buildGUI: function() {
 
             var _this = this,
@@ -163,10 +152,7 @@ var SUDOKU = ( function($, R) {
             return $('#container').append( theTable );
         },
 
-        /**
-         * Handle key up events
-         */
-        onKeyUp: function( e ) {
+        onKeyUp: function(e) {
             var isValid, sectRow, sectCol, sectIndex,
                 val = $( e.currentTarget ).val(),
                 row = $( e.currentTarget ).data('row'),
@@ -193,11 +179,8 @@ var SUDOKU = ( function($, R) {
 
             // Cache Game Board
             this.$inputCache = $('.sudoku-board').find('input');
-         },
+        },
 
-        /**
-         * Reset the board and the game parameters
-         */
         resetGame: function() {
             this.resetMatrices();
             this.resetInputFields();
@@ -241,10 +224,7 @@ var SUDOKU = ( function($, R) {
             },  $inputs );
         },
 
-         /**
-          * Validate Number
-          */
-          validateNumber: function(val, rowID, colID, oldNum) {
+        validateNumber: function(val, rowID, colID, oldNum) {
             var isValid = true;
                 sectRow = Math.floor( rowID / 3 );
                 sectCol = Math.floor( colID / 3 );
@@ -290,10 +270,10 @@ var SUDOKU = ( function($, R) {
         },
 
         validateMatrix: function() {
-                var rowID, colID, isValid,
-                    _this = this,
-                    hasError = false,
-                    $input = $('.sudoku-board').find('input[data-row="'+rowID+'"][data-col="'+colID+'"]');
+            var rowID, colID, isValid,
+                _this = this,
+                hasError = false,
+                $input = $('.sudoku-board').find('input[data-row="'+rowID+'"][data-col="'+colID+'"]');
 
             // Validate each value cached in the matrix row.
             R.forEach.idx( function( row, rowID ) { 
