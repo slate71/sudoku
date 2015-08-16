@@ -14,7 +14,6 @@ var livereload = require('gulp-livereload');
 var jade = require('gulp-jade');
 
 var paths = {
-    scripts:   ['./src/js/vendor/*.js', './src/js/*.js', '!./src/js/index.js'],
     styles:    ['./src/scss/**/*.scss'],
     templates: ['./src/templ/*.jade']
 };
@@ -33,14 +32,10 @@ b.on('log', gutil.log); // output build logs to terminal
 
 function bundle() {
   return b.bundle()
-    // log errors if they happen
     .on('error', gutil.log.bind(gutil, 'Browserify Error'))
     .pipe(source('bundle.js'))
-    // optional, remove if you don't need to buffer file contents
     .pipe(buffer())
-    // optional, remove if you dont want sourcemaps
     .pipe(sourcemaps.init({loadMaps: true})) // loads map from browserify file
-       // Add transformation tasks to the pipeline here.
     .pipe(sourcemaps.write('./')) // writes .map file
     .pipe(gulp.dest('./dist'));
 }
@@ -50,7 +45,7 @@ gulp.task('styles', function(){
         .pipe(sourcemaps.init())
           .pipe(sass())
         .pipe(autoprefixer())
-        .pipe(sourcemaps.write('./maps'))
+        .pipe(sourcemaps.write('./'))
         .pipe(gulp.dest('./dist/'))
         .pipe(livereload());
 });
@@ -66,7 +61,6 @@ gulp.task('templates', function(){
 
 gulp.task('watch', function(){
     livereload.listen();
-    //gulp.watch(paths.scripts, ['scripts']);
     gulp.watch(paths.styles, ['styles']);
     gulp.watch(paths.templates, ['templates']);
 });

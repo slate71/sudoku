@@ -7515,446 +7515,385 @@
 'use strict';
 
 var R = require('ramda');
-var Sudoku = require('./sudokuEngine/SudokuEngine.js');
-
-var defaultConfig = {
-    // If set to true, will validate the numbers as they're entered.
-    'validate_on_insert': true,
-    'show_solver_timer': true,
-    'show_recursion_counter': true,
-    'solver_shuffle_numbers': true
-};
-var paused = false;
-var counter = 0;
-var _instance;
-var _game;
-
-function init(config) {
-	var _config = R.merge(defaultConfig, config);
-	var sudoku = new Sudoku(_config);
-
-	return {
- 		render: function() {
- 			return document.getElementById('container').appendChild(sudoku.createSudokuBoard());
- 		},
-		
-		reset: function() {
-			document.querySelector('.sudoku-board').classList.remove('valid-matrix');
-			return sudoku.resetGame();
-		},
-		
-		validate: function() {},
-		
-		solve: function() {
-			var isValid;
-			var startTime;
-			var endTime; 
-			var elapsed; 
-			var gameResults;
-			var table;
-            
-			// Make sure the board is valid first
-            if ( !sudoku.validateMatrix() ) {
-                return false;
-            }
-
-            // Reset counters
-            sudoku.recursionCounter = 0;
-            sudoku.backtrackCounter = 0;
-
-            // Check start time
-            startTime = Date.now();
-
-            // Solve the game
-            isValid = sudoku.solveGame( 0, 0 );
-
-            // Get solving end time
-            endTime = Date.now();
-
-            // Visual indication of whether the game was solved
-            document.querySelector('.sudoku-board').classList.toggle('valid-matrix', isValid );
-            if ( isValid ) {
-                var inputs = document.querySelector('.sudoku-board').getElementsByTagName('input');
-                R.forEach(function(input) {
-                	input.setAttribute( 'disabled', 'disabled' );
-                }, inputs);
-            }
-
-            // Display elapsed time
-            if ( sudoku.config.show_solver_timer ) {
-                elapsed = endTime - startTime;
-                window.console.log( 'Solver elapsed time: ' + elapsed + 'ms' );
-            }
-            // Display number of reursions and backtracks
-            if ( sudoku.config.show_recursion_counter ) {
-                window.console.log( 'Solver recursions: ' + sudoku.recursionCounter );
-                window.console.log( 'Solver backtracks: ' + sudoku.backtrackCounter );
-            }
-		},
-	}
-}
-
-init().render();
-document.querySelector('.js-reset-game').onclick = init().reset;
-document.querySelector('.js-solve-game').onclick = init().solve;
-document.querySelector('.js-validate-game').onclick = init().validate;
-
-},{"./sudokuEngine/SudokuEngine.js":3,"ramda":1}],3:[function(require,module,exports){
-'use strict';
-
-var R = require('ramda');
 
 function Sudoku(config) {
-    
     this.config = config;
     this.recursionCounter = 0;
     this.matrix = {};
     this.validation = {};
-    this.resetMatrices();
+    this.inputCache;
 
+    this.resetMatrices();
     return this;
 }
 
 Sudoku.prototype = {
+    resetMatrices: function resetMatrices() {
+        this.matrix = {col: [], row: [], sect: []};
+        this.validation = {col: [], row: [], sect: []};
 
-    // Returns a document fragment containing the sudoku board GUI
-    createSudokuBoard: function() {
-
-        var sudokuBoard = document.createDocumentFragment();
-        var _handleKeyUp = this.handleKeyUp;
-
-        function createInput(colId) {
-            var input = document.createElement('input');
-
-            input.setAttribute('maxLength', '1');
-            input.setAttribute('data-col', colId);
-            input.onKeyUp = _handleKeyUp;
-
-            return input;
-        }
-        
-        function createCol(colId) {
-            var col = document.createElement('td');
-
-            col.appendChild(createInput(colId));
-
-            return col;
-        }
-        
-        function createRow() {
-            var row = document.createElement('tr');
-
-            R.times(function(colId) {
-                return row.appendChild(createCol(colId));
-            }, 9);
-
-            return row;
+        function colsAndRows(n) {
+            this.matrix.col[n] = R.repeat('', 9);
+            this.matrix.row[n] = R.repeat('', 9);
+            this.validation.col[n] = [];
+            this.validation.row[n] = [];
         }
 
-        function createBoard() {
-            var board = document.createElement('table');
-
-            board.className = 'sudoku-board';
-
-            R.times(function(rowId) {
-                var row = createRow();
-                var inputs = row.getElementsByTagName('input');
-
-                R.forEach(function(input) {
-                    input.setAttribute('data-row', rowId);
-
-                    if ((Math.floor(input.dataset.col/3) + Math.floor(input.dataset.row/3)) % 2 === 0 ) {
-                        input.classList.add('sect1');
-                    } else {
-                        input.classList.add('sect2');
-                    }
-
-                    return input;
-                }, inputs);
-
-                return board.appendChild(row);
-            }, 9);
-
-            return board;
+        function sectCol(c) {
+            var r = arguments[1];
+            this.matrix.sect[c][r] = R.repeat('', 9);
+            this.validation.sect[c][r] = [];
         }
 
-        return sudokuBoard.appendChild(createBoard());
+        function sectRow(r) {
+            this.matrix.sect[r] = [];
+            this.validation.sect[r] = [];
+            R.times(sectCol.bind(this, r), 3);
+        }
+
+        R.times(colsAndRows.bind(this), 9);
+        R.times(sectRow.bind(this), 3);
     },
 
-    // 
-    handleKeyUp: function(e) {
-        // if validate on insert is true, validate on key up else validate on game end.
-        // calculate section identifiers
-        // cache value in matrix
-        // cache game board
-    },
-
-    resetGame: function() {
-        this.resetMatrices();
-        this.resetInputFields();
-    },
-
-    resetMatrices: function() {
-        var _this = this;
-            
-        this.matrix = { col: {}, row: {}, sect: {} };
-        this.validation = { col: {}, row: {}, sect: {} };
-
-         R.times( function( n ) { 
-            _this.matrix.col[n] = R.repeat( '', 9 );
-            _this.matrix.row[n] = R.repeat( '', 9 );
-            _this.validation.col[n] = [];
-            _this.validation.row[n] = [];
-        }, 9 );
-        
-        R.times( function( row ) {
-            _this.matrix.sect[row] = {};
-            _this.validation.sect[row] = {};
-
-            R.times( function( col ) {
-                _this.matrix.sect[row][col] = R.repeat( '', 9 );
-                _this.validation.sect[row][col] = [];
-            }, 3 );
-        }, 3 );
-    },
-
-    resetInputFields: function() {
-        var inputs = document.querySelector('.sudoku-board').getElementsByTagName('input');
-
-        R.forEach(function(input) {
-            if (input.classList.contains('sudoku-clues')) {
-                return input.value = '';
-            }
-        }, inputs);
-    },
-
-    validateNumber: function(val, rowID, colID, oldNum) {
+    validateNumber: function validateNumber(val, row, col, prevVal) {
         var isValid = true;
-            sectRow = Math.floor( rowID / 3 );
-            sectCol = Math.floor( colID / 3 );
-        
-        // Remove oldNum from the validation matrices,
-        // if it exists in them.
-        oldNum = oldNum || '';
-        if ( this.validation.row[rowID].indexOf( oldNum ) > -1 ) {
-            this.validation.row[rowID].splice(
-                this.validation.row[rowID].indexOf( oldNum ), 1
-            );
+        var sectRow = Math.floor(row/3);
+        var sectCol = Math.floor(col/3);
+        var vRow = this.validation.row[row];
+        var vCol = this.validation.col[col];
+        var vSect = this.validation.sect[sectRow][sectCol];
+        var isValidVal = (!isNaN(val) && val > 0 && val <= 9);
+        var hasPeer = (R.contains(val)(vRow) || R.contains(val)(vCol) || R.contains(val)(vSect));
+
+        prevVal = prevVal || '';
+        // Remove prevVal from validation matrix if it exists.
+        if (vRow.indexOf(prevVal) > -1) {
+            vRow.splice(vRow.indexOf(prevVal), 1);
+        } 
+        if (vCol.indexOf(prevVal) > -1) {
+            vCol.splice(vCol.indexOf(prevVal), 1);
         }
-        if ( this.validation.col[colID].indexOf( oldNum ) > -1 ) {
-            this.validation.col[colID].splice(
-                this.validation.col[colID].indexOf( oldNum ), 1
-            );
-        }
-        if ( this.validation.sect[sectRow][sectCol].indexOf( oldNum ) > -1 ) {
-            this.validation.sect[sectRow][sectCol].splice(
-                this.validation.sect[sectRow][sectCol].indexOf( oldNum ), 1
-            );
+        if (vSect.indexOf(prevVal) > -1) {
+            vSect.splice(vSect.indexOf(prevVal), 1);
         }
 
-        if( val !== '' ) {
-            if( $.isNumeric( val ) && val > 0 && val <= 9 ) {
-                if( 
-                    R.contains( val )( this.validation.row[rowID] ) ||
-                    R.contains( val )( this.validation.col[colID] ) ||
-                    R.contains( val )( this.validation.sect[sectRow][sectCol] )
-                ) {
-                    isValid = false; 
+        if (val !== '') {
+            if (isValidVal) {
+                if (hasPeer) {
+                    isValid = false;
                 } else {
                     isValid = true;
                 }
-
+            } else {
+                isValid = false;
             }
-            this.validation.row[rowID].push( val );
-            this.validation.col[colID].push( val );
-            this.validation.sect[sectRow][sectCol].push( val );
+            // Add val to validation matrix whether it's valid or not.
+            vRow.push(val);
+            vCol.push(val);
+            vSect.push(val);
         }
 
         return isValid;
     },
 
-    validateMatrix: function() {
-        var rowID, colID, isValid,
-            _this = this,
-            hasError = false,
-            input = document.querySelector('.sudoku-board').getElementsByTagName('input[data-row="'+rowID+'"][data-col="'+colID+'"]');
+    validateMatrix: function validateMatrix() {
+        var matrix = R.flatten(this.matrix.row);
+        var hasError = false;
+        var isValid = true;
+        var col = 0;
 
-        // Validate each value cached in the matrix row.
-        R.forEachIndexed( function( row, rowID ) { 
-            R.forEachIndexed( function( val, colID ) {
-                isValid = _this.validateNumber( val, rowID, colID, val );
-                $input.toggleClass( 'sudoku-input-error', !isValid );
-                if( !isValid ) {
-                    hasError = true;
-                }
-            }, row ); 
-        }, _this.matrix.row );
-                    
-        return !hasError;
-    },
+        function validate(val, idx) {
+            var row = Math.floor(idx/9);
 
-    solveGame: function( row, col ) {
-        var _this = this; 
-        var $nextSquare;
-        var cval;
-        var sqRow;
-        var sqCol; 
-        var legalValues;
-        var sectRow;
-        var sectCol;
-        var secIndex;
+            hasError = !this.validateNumber(val, row, col, val);
+            if (hasError === true) { isValid = false };
 
-        this.recursionCounter++;
-        $nextSquare = this.findClosestEmptySquare( row, col );
-
-        if ( !$nextSquare ) {
-            // End of Board
-            return true;
-        } else {
-            $nextSquare = $( $nextSquare );
-            sqRow = $nextSquare.data( 'row' ); // returns row id
-            sqCol = $nextSquare.data( 'col' ); // return col id
-            legalValues = this.findLegalValuesForSquare( sqRow, sqCol );
-
-            // Find the segment id
-            sectRow = Math.floor( sqRow / 3 );
-            sectCol = Math.floor( sqCol / 3 );
-            secIndex = ( sqRow % 3 ) * 3 + ( sqCol % 3 );
-
-            // Try out legal values for this cell
-            for ( var i = 0; i < legalValues.length; i++ ) {
-                cval = legalValues[i];
-                // Update value in input
-                $nextSquare.val( cval );
-                
-                // Update in matrices
-                this.matrix.row[sqRow][sqCol] = cval;
-                this.matrix.col[sqCol][sqRow] = cval;
-                this.matrix.sect[sectRow][sectCol][secIndex] = cval;
-                
-
-                // Recursively keep trying
-                if ( this.solveGame( sqRow, sqCol ) ) {
-                    return true;
-                } else {
-                    // There was a problem, we should backtrack
-                    this.backtrackCounter++;
-
-                    $nextSquare.val( '' );
-
-                    // Remove value from matrices
-                    this.matrix.row[sqRow][sqCol] = '';
-                    this.matrix.col[sqCol][sqRow] = '';
-                    this.matrix.sect[sectRow][sectCol][secIndex] = '';
-                }
-            }
-            // If there was no success with any of the legal
-            // numbers, call backtrack recursively backwards
-            return false;
+            (col === 8) ? col = 0 : col++;
         }
+        
+        R.forEachIndexed(validate.bind(this), matrix);
+
+        return isValid;
     },
 
-    findClosestEmptySquare: function( row, col ) {
-        var startingSquare;
-        var remainingSquares; 
-        var emptySquares;
-        var closestEmptySquare;
+    findClosestEmptySquare: function findClosestEmptySquare(row, col, squares) {
+        // Index of the starting square
+        var startingSquare = parseInt(row) * 9 + parseInt(col);
 
-        // Returns the index of the cell passed into the function.
-        startingSquare = col + 9 * row;
-        console.log('starting square:' + startingSquare);
+        // Array of remainingSquares
+        var remainingSquares = Array.prototype.slice.call(squares, startingSquare, 82);
 
-        // Return an array of cells starting from row, col coordinates
-        // to the end of the board.
-        remainingSquares = R.slice( startingSquare, 82 )( [].slice.call(document.getElementsByTagName('input')) );
-        console.log('remaining squares:' + remainingSquares);
+        // Find closest empty square
+        var closestEmptySquare = R.find(emptySquare)(remainingSquares);
 
-        // Filter the empty cells.
-        emptySquares = R.filterIndexed( function( cell, idx, list ) {
-            return cell;
-        }, remainingSquares );
-        console.log('empty squares:' + emptySquares);
-
-        // Return the closestEmptySquare
-        closestEmptySquare = R.head( emptySquares );
-        console.log('closest empty square:' + closestEmptySquare);
+        function emptySquare(square) {
+            return square.value === '';
+        }
 
         return closestEmptySquare;
     },
 
-    findLegalValuesForSquare: function( row, col ) {
-        var legalVals, legalNums, val, i,
-            sectRow = Math.floor( row / 3 ),
-            sectCol = Math.floor( col / 3 );
-
-        // Returns a list of numbers from 1 to 9.
-        legalNums = R.range(1, 10);
-
-        // Check existing numbers in col
-        for ( i = 0; i < 9; i++ ) {
-            try {
-                val = Number( this.matrix.col[col][i] );
-            } catch( e ) {
-                console.log(e instanceof TypeError); // true
-                  console.log(e.message);              // "null has no properties"
-                  console.log(e.name);                 // "TypeError"
-                  console.log(e.fileName);             // "Scratchpad/1"
-                  console.log(e.lineNumber);           // 2
-                  console.log(e.columnNumber);         // 2
-                  console.log(e.stack);  
-            }
-            if ( val > 0) {
-                // Remove from array
-                if ( legalNums.indexOf( val ) > -1 ) {
-                    legalNums.splice( legalNums.indexOf( val ), 1 );
-                }
-            }
+    findLegalValuesForSquare: function findLegalValuesForSquare(row, col) {
+        var sectRow = Math.floor( row / 3 );
+        var sectCol = Math.floor( col / 3 );
+        
+        // An array of numbers from 1 to 9.
+        var legalNums = R.range(1,10);
+        
+        function checkCol(value) {
+            return this.matrix.col[col].indexOf(value) === -1;
         }
 
-        // Check existing numbers in row
-        for ( i = 0; i < 9; i++ ) {
-            val = Number( this.matrix.row[row][i] );
-            if ( val > 0 ) {
-                // Remove from array
-                if ( legalNums.indexOf( val ) > -1 ) {
-                    legalNums.splice( legalNums.indexOf( val ), 1 );
-                }
-            }
+        function checkRow(value) {
+            return this.matrix.row[row].indexOf(value) === -1;
         }
 
-        // Check existing numbers in section
-        sectRow = Math.floor( row / 3 );
-        sectCol = Math.floor( col / 3 );
-        for ( i = 0; i < 9; i++ ) {
-            val = Number( this.matrix.sect[sectRow][sectCol][i] );
-            if ( val > 0 ) {
-                // Remove from array
-                if ( legalNums.indexOf( val ) > -1 ) {
-                    legalNums.splice( legalNums.indexOf( val ), 1 );
-                }
-            }
+        function checkSect(value) {
+            return this.matrix.sect[sectRow][sectCol].indexOf(value) === -1;
         }
 
-        if ( this.config.solver_shuffle_numbers ) {
-            // Shuffling the resulting 'legalNums' array will
-            // make sure the solver produces different answers
-            // for the same scenario. Otherwise, 'legalNums'
-            // will be chosen in sequence.
-            for ( i = legalNums.length - 1; i > 0; i-- ) {
-                var rand = getRandomInt( 0, i );
-                temp = legalNums[i];
-                legalNums[i] = legalNums[rand];
-                legalNums[rand] = temp;
-            }
+        function shuffle() {
+            return 0.5 - Math.random();
         }
+
+        legalNums = R.filter(checkCol.bind(this), legalNums);
+        legalNums = R.filter(checkRow.bind(this), legalNums);
+        legalNums = R.filter(checkSect.bind(this), legalNums);
+        legalNums.forEach(function(val, idx, list) {
+            legalNums = legalNums.sort(shuffle);
+        });
 
         return legalNums;
     },
+
+    solveGame: function solveGame(row, col, squares) {
+        var sqRow, sqCol, legalValues, cVal, sectRow, sectCol, sectIndex;
+        var nextSquare = this.findClosestEmptySquare(row, col, squares);
+        this.recursionCounter++;
+
+        if (!nextSquare) {
+            // We've reached the end of the board.
+            return true;
+        } else {
+            sqRow = nextSquare.getAttribute('data-row');
+            sqCol = nextSquare.getAttribute('data-col');
+
+            legalValues = this.findLegalValuesForSquare(sqRow, sqCol);
+
+            sectRow = Math.floor(sqRow / 3);
+            sectCol = Math.floor(sqCol / 3);
+            sectIndex = (sqRow % 3) * 3 + (sqCol % 3);
+
+            for (var i = 0; i < legalValues.length; i++) {
+                cVal = legalValues[i];
+            
+                nextSquare.value = cVal;
+                this.matrix.row[sqRow][sqCol] = cVal;
+                this.matrix.col[sqCol][sqRow] = cVal;
+                this.matrix.sect[sectRow][sectCol][sectIndex] = cVal;
+
+                if(this.solveGame(sqRow, sqCol, squares)) {
+                    return true;
+                } else {
+                    nextSquare.value = '';
+                    this.matrix.row[sqRow][sqCol] = '';
+                    this.matrix.col[sqCol][sqRow] = '';
+                    this.matrix.sect[sectRow][sectCol][sectIndex] = '';
+                    this.backtrackCounter++;
+                }
+            }
+        }
+
+        return false;
+    }
 };
 
 module.exports = Sudoku;
 
-},{"ramda":1}]},{},[2])
+},{"ramda":1}],3:[function(require,module,exports){
+var R = require('ramda');
+
+function buildInput(rowID, colID) {
+    var input, isSect1;
+    
+    input = document.createElement('input');
+    input.setAttribute('maxlength', '1');
+    input.setAttribute('data-row', rowID);
+    input.setAttribute('data-col', colID);
+
+    isSect1 = (Math.floor(input.getAttribute('data-col')/3) +
+               Math.floor(input.getAttribute('data-row')/3)) % 2 === 0;
+
+    if( isSect1 ) {
+        input.setAttribute('data-sect', '1');
+        input.classList.add('sect1');
+    } else {
+        input.setAttribute('data-sect', '2');
+        input.classList.add('sect2');
+    }
+
+    return input;
+}
+
+function buildCol(rowID, colID) {
+    var col = document.createElement('td');
+        col.appendChild(buildInput(rowID, colID));
+
+    return col;
+}
+
+function buildRow(rowID) {
+    var row = document.createElement('tr');
+
+    function addCol(colID) {
+        return row.appendChild(buildCol(rowID, colID));
+    }
+
+    R.times(addCol, 9);
+
+    return row;
+}
+
+function buildTable() {
+    var table = document.createElement('table');
+        table.classList.add('sudoku-board');
+
+    R.times(function(rowID) {
+        table.appendChild(buildRow(rowID));
+    }, 9);
+
+    return table;
+}
+
+module.exports = buildTable();
+
+},{"ramda":1}],4:[function(require,module,exports){
+'use strict';
+
+var gui = require('./gui');
+var init = require('./init');
+var game = init();
+
+function $() { 
+    var query = Array.prototype.join.call(arguments, ',');
+    return document.querySelector(query); 
+}
+
+function handleInputKeyUp(e) {
+    var val, row, col, sect, isValid, sectRow, sectCol, sectIndex;
+
+    val = +e.target.value;
+    row = e.target.getAttribute('data-row');
+    col = e.target.getAttribute('data-col');
+    sect = e.target.getAttribute('data-sect');
+
+    // calculate section identifiers
+    sectRow = Math.floor( row / 3 );
+    sectCol = Math.floor( col / 3 );
+    sectIndex = ( row % 3 ) * 3 + ( col % 3 );
+
+    game.props.matrix.row[row][col] = val;
+    game.props.matrix.col[col][row] = val;
+    game.props.matrix.sect[sectRow][sectCol][sectIndex] = val;
+}
+
+function handleButtonClick(e) {
+    if (e.target.className == 'js-reset-game') {
+        game.reset();
+    } else if (e.target.className == 'js-solve-game') {
+        console.log('Solver Clicked');
+
+        [].slice.call(document.querySelectorAll('input')).forEach(function(input) {
+            var value = +input.value;
+
+            if (value > 0) {
+                var sqRow = input.getAttribute('data-row');
+                var sqCol = input.getAttribute('data-col');
+
+                var sectRow = Math.floor(sqRow / 3);
+                var sectCol = Math.floor(sqCol / 3);
+                var sectIndex = (sqRow % 3) * 3 + (sqCol % 3);
+
+                game.props.matrix.row[sqRow][sqCol] = value;
+                game.props.matrix.col[sqCol][sqRow] = value;
+                game.props.matrix.sect[sectRow][sectCol][sectIndex] = value;
+            }
+        });
+
+        game.solve();
+    } else if (e.target.className == 'js-validate-game') {
+        game.validate();
+    }
+}
+
+$('#container').appendChild(gui);
+$('.sudoku-board').addEventListener('keyup', handleInputKeyUp);
+$('#buttons').addEventListener('click', handleButtonClick);
+
+var input = document.querySelectorAll('input');
+var g = ",,2,,6,,8,,,,,,5,,2,,,,3,,5,,,8,,,,,6,,4,,1,,7,,7,,,,,6,,,9,,5,,8,,7,,3,,8,,6,,,3,,,,,,,7,,4,,,,,,1,,8,,9,,";
+    g = g.split(',');
+    g.forEach(function(i, idx) { 
+        if (i != '') input[idx].value = i; 
+    });
+
+},{"./gui":3,"./init":5}],5:[function(require,module,exports){
+var R = require('ramda');
+var Sudoku = require('./Sudoku');
+
+var defaultConfig = {
+	'validate_on_insert': true,
+    'show_solver_timer': true,
+    'show_recursion_counter': true,
+    'solver_shuffle_numbers': true
+};
+
+module.exports = function init(config) {
+	var _config = R.merge(defaultConfig, config);
+	var sudoku = new Sudoku( _config );
+	var paused = false;
+	var counter = 0;
+	
+	return {
+		props: sudoku,
+
+		reset: function() {
+			var inputs = [].slice.call(document.querySelectorAll('input'));
+			R.forEach(function(input) { input.value = '' }, inputs);
+			sudoku.resetMatrices();
+		},
+
+		solve: function(values) {
+			var isValid, startTime, endTime, elapsed, gameResults, table;
+
+			if ( !sudoku.validateMatrix() ) {
+                return false;
+            }
+
+            sudoku.recursionCounter = 0;
+            sudoku.backtrackCounter = 0;
+
+            startTime = Date.now();
+
+            isValid = sudoku.solveGame(0, 0, document.querySelectorAll('input'));
+
+            endTime = Date.now();
+            elapsed = endTime - startTime;
+
+			console.log('Solver elapsed time: ' + elapsed + 'ms');
+			console.log('Solver recursions: ' + sudoku.recursionCounter);
+            console.log('Solver backtracks: ' + sudoku.backtrackCounter);
+            console.log(sudoku.matrix);
+		},
+
+		validate: function() {
+			var isValid = sudoku.validateMatrix();
+			console.log(isValid);
+		}
+	};
+};
+
+},{"./Sudoku":2,"ramda":1}]},{},[4])
 
 
 //# sourceMappingURL=bundle.js.map

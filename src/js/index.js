@@ -1,86 +1,68 @@
 'use strict';
 
-var R = require('ramda');
-var Sudoku = require('./sudokuEngine/SudokuEngine.js');
+var gui = require('./gui');
+var init = require('./init');
+var game = init();
 
-var defaultConfig = {
-    // If set to true, will validate the numbers as they're entered.
-    'validate_on_insert': true,
-    'show_solver_timer': true,
-    'show_recursion_counter': true,
-    'solver_shuffle_numbers': true
-};
-var paused = false;
-var counter = 0;
-var _instance;
-var _game;
-
-function init(config) {
-	var _config = R.merge(defaultConfig, config);
-	var sudoku = new Sudoku(_config);
-
-	return {
- 		render: function() {
- 			return document.getElementById('container').appendChild(sudoku.createSudokuBoard());
- 		},
-		
-		reset: function() {
-			document.querySelector('.sudoku-board').classList.remove('valid-matrix');
-			return sudoku.resetGame();
-		},
-		
-		validate: function() {},
-		
-		solve: function() {
-			var isValid;
-			var startTime;
-			var endTime; 
-			var elapsed; 
-			var gameResults;
-			var table;
-            
-			// Make sure the board is valid first
-            if ( !sudoku.validateMatrix() ) {
-                return false;
-            }
-
-            // Reset counters
-            sudoku.recursionCounter = 0;
-            sudoku.backtrackCounter = 0;
-
-            // Check start time
-            startTime = Date.now();
-
-            // Solve the game
-            isValid = sudoku.solveGame( 0, 0 );
-
-            // Get solving end time
-            endTime = Date.now();
-
-            // Visual indication of whether the game was solved
-            document.querySelector('.sudoku-board').classList.toggle('valid-matrix', isValid );
-            if ( isValid ) {
-                var inputs = document.querySelector('.sudoku-board').getElementsByTagName('input');
-                R.forEach(function(input) {
-                	input.setAttribute( 'disabled', 'disabled' );
-                }, inputs);
-            }
-
-            // Display elapsed time
-            if ( sudoku.config.show_solver_timer ) {
-                elapsed = endTime - startTime;
-                window.console.log( 'Solver elapsed time: ' + elapsed + 'ms' );
-            }
-            // Display number of reursions and backtracks
-            if ( sudoku.config.show_recursion_counter ) {
-                window.console.log( 'Solver recursions: ' + sudoku.recursionCounter );
-                window.console.log( 'Solver backtracks: ' + sudoku.backtrackCounter );
-            }
-		},
-	}
+function $() { 
+    var query = Array.prototype.join.call(arguments, ',');
+    return document.querySelector(query); 
 }
 
-init().render();
-document.querySelector('.js-reset-game').onclick = init().reset;
-document.querySelector('.js-solve-game').onclick = init().solve;
-document.querySelector('.js-validate-game').onclick = init().validate;
+function handleInputKeyUp(e) {
+    var val, row, col, sect, isValid, sectRow, sectCol, sectIndex;
+
+    val = +e.target.value;
+    row = e.target.getAttribute('data-row');
+    col = e.target.getAttribute('data-col');
+    sect = e.target.getAttribute('data-sect');
+
+    // calculate section identifiers
+    sectRow = Math.floor( row / 3 );
+    sectCol = Math.floor( col / 3 );
+    sectIndex = ( row % 3 ) * 3 + ( col % 3 );
+
+    game.props.matrix.row[row][col] = val;
+    game.props.matrix.col[col][row] = val;
+    game.props.matrix.sect[sectRow][sectCol][sectIndex] = val;
+}
+
+function handleButtonClick(e) {
+    if (e.target.className == 'js-reset-game') {
+        game.reset();
+    } else if (e.target.className == 'js-solve-game') {
+        console.log('Solver Clicked');
+
+        [].slice.call(document.querySelectorAll('input')).forEach(function(input) {
+            var value = +input.value;
+
+            if (value > 0) {
+                var sqRow = input.getAttribute('data-row');
+                var sqCol = input.getAttribute('data-col');
+
+                var sectRow = Math.floor(sqRow / 3);
+                var sectCol = Math.floor(sqCol / 3);
+                var sectIndex = (sqRow % 3) * 3 + (sqCol % 3);
+
+                game.props.matrix.row[sqRow][sqCol] = value;
+                game.props.matrix.col[sqCol][sqRow] = value;
+                game.props.matrix.sect[sectRow][sectCol][sectIndex] = value;
+            }
+        });
+
+        game.solve();
+    } else if (e.target.className == 'js-validate-game') {
+        game.validate();
+    }
+}
+
+$('#container').appendChild(gui);
+$('.sudoku-board').addEventListener('keyup', handleInputKeyUp);
+$('#buttons').addEventListener('click', handleButtonClick);
+
+var input = document.querySelectorAll('input');
+var g = ",,2,,6,,8,,,,,,5,,2,,,,3,,5,,,8,,,,,6,,4,,1,,7,,7,,,,,6,,,9,,5,,8,,7,,3,,8,,6,,,3,,,,,,,7,,4,,,,,,1,,8,,9,,";
+    g = g.split(',');
+    g.forEach(function(i, idx) { 
+        if (i != '') input[idx].value = i; 
+    });
