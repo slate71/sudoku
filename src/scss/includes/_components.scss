@@ -66,10 +66,10 @@ table.sudoku-board input {
 	font-size: 16px;
 	text-transform: uppercase;
 	&:first-child {
-		border-right: solid 1px $darkGray;
+		border-left: solid 1px $darkGray;
 	}
 	&:last-child {
-		border-left: solid 1px $darkGray;
+		//border-right: solid 1px $darkGray;
 	}
 	&:hover {
 		background-color: $blue;
